@@ -8,6 +8,9 @@ ULONG QQPID[10] = { 0 };
 //BYTE Patch4E317[5] = { 0x90,0x90,0x90,0x90,0x90 };
 //BYTE Patch4E31E[4] = { 0x90,0x90,0x90,0x90 };
 
+// 51 68 D0 6E 8B 5A 56 FF 50 78
+
+
 BYTE Patch4DFBC[1] = { 0x90 };
 BYTE Patch4DFC0[5] = { 0x90,0x90, 0x90, 0x90, 0x90 };
 BYTE Patch4DFC7[4] = { 0x90,0x90, 0x90, 0x90 };
@@ -21,7 +24,26 @@ BYTE Patch4EE67[10] = { 0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90 };
 BYTE Patch4EC21[1] = { 0x90 };
 BYTE Patch4EC25[5] = { 0x90,0x90, 0x90, 0x90, 0x90 };
 BYTE Patch4EC2C[4] = { 0x90,0x90, 0x90, 0x90 };
-BYTE Patch4F11C[10] = { 0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90 };
+BYTE Patch4F11C[10] = { 0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90 };//Version 9.1.5
+
+
+BYTE Patch50CE4[1] = { 0x90 };
+BYTE Patch50CE8[5] = { 0x90,0x90, 0x90, 0x90, 0x90 };
+BYTE Patch50CEF[4] = { 0x90,0x90, 0x90, 0x90 };
+BYTE Patch511DF[10] = { 0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90,0x90 };//Version 9.1.6
+
+
+#define GROUP_PATCH_OFFEST1  0x50CE4
+#define GROUP_PATCH_OFFEST2  0x50CE8
+#define GROUP_PATCH_OFFEST3  0x50CEF
+#define PRIVATE_PATCH_OFFEST  0x511DF
+
+#define GROUP_PATCH_POINT1 (LPVOID)Patch50CE4
+#define GROUP_PATCH_POINT2 (LPVOID)Patch50CE8
+#define GROUP_PATCH_POINT3 (LPVOID)Patch50CEF
+#define PRIVATE_PATCH_POINT (LPVOID)Patch511DF
+
+
 
 #define ERROR_REPORT printf("Error : 0x%08X \n", GetLastError());
 BOOL ElevateDebugPrivileges()
@@ -29,11 +51,11 @@ BOOL ElevateDebugPrivileges()
 	HANDLE hToken;
 	TOKEN_PRIVILEGES tkp;
 	tkp.PrivilegeCount = 1;
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))//»°µ√Ω¯≥Ã¡Ó≈∆æ‰±˙.
-		return FALSE;// ß∞‹∑µªÿ0.
-	LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &tkp.Privileges[0].Luid);//ªÒ»°∂‘∆‰À˚Ω¯≥ÃΩ¯––µ˜ ‘µƒÃÿ»®.
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))//ÂèñÂæóËøõÁ®ã‰ª§ÁâåÂè•ÊüÑ.
+		return FALSE;//Â§±Ë¥•ËøîÂõû0.
+	LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &tkp.Privileges[0].Luid);//Ëé∑ÂèñÂØπÂÖ∂‰ªñËøõÁ®ãËøõË°åË∞ÉËØïÁöÑÁâπÊùÉ.
 	tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-	if (!AdjustTokenPrivileges(hToken, FALSE, &tkp, sizeof(TOKEN_PRIVILEGES), NULL, NULL))//…Ë∂®¥Úø™∏√Ãÿ»®
+	if (!AdjustTokenPrivileges(hToken, FALSE, &tkp, sizeof(TOKEN_PRIVILEGES), NULL, NULL))//ËÆæÂÆöÊâìÂºÄËØ•ÁâπÊùÉ
 	{
 		return FALSE;
 	}
@@ -110,16 +132,16 @@ int main()
 		}
 		HANDLE QQHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, QQPID[i]);
 		VirtualProtectEx(QQHandle, (LPVOID)(IMBase + 0x1000), 0x324000, PAGE_EXECUTE_READWRITE, &OldProtect);
-		WriteProcessMemory(QQHandle, (PVOID)(IMBase + 0x4F11C), (LPVOID)Patch4F11C, 10, 0);
+		WriteProcessMemory(QQHandle, (PVOID)(IMBase + PRIVATE_PATCH_OFFEST), PRIVATE_PATCH_POINT, 10, 0);
 		ERROR_REPORT
 
-		WriteProcessMemory(QQHandle, (PVOID)(IMBase + 0x4EC21), (LPVOID)Patch4EC21, 1, 0);
+		WriteProcessMemory(QQHandle, (PVOID)(IMBase + GROUP_PATCH_OFFEST1), GROUP_PATCH_POINT1, 1, 0);
 		ERROR_REPORT
 
-		WriteProcessMemory(QQHandle, (PVOID)(IMBase + 0x4EC25), (LPVOID)Patch4EC25, 5, 0);
+		WriteProcessMemory(QQHandle, (PVOID)(IMBase + GROUP_PATCH_OFFEST2), GROUP_PATCH_POINT2, 5, 0);
 		ERROR_REPORT
 
-		WriteProcessMemory(QQHandle, (PVOID)(IMBase + 0x4EC2C), (LPVOID)Patch4EC2C, 4, 0);
+		WriteProcessMemory(QQHandle, (PVOID)(IMBase + GROUP_PATCH_OFFEST3), GROUP_PATCH_POINT3, 4, 0);
 		ERROR_REPORT
 
 		VirtualProtectEx(QQHandle, (LPVOID)(IMBase + 0x1000), 0x324000, OldProtect, &OldProtect);
